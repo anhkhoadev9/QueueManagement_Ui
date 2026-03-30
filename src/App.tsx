@@ -8,6 +8,9 @@ import TellerDashboard from './pages/TellerDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import QueuePage from './pages/QueuePage';
+import FeedbackPage from './pages/FeedbackPage';
+import GoogleCallback from './pages/GoogleCallback';
 
 function App() {
   return (
@@ -17,9 +20,11 @@ function App() {
           {/* Public Routes without Sidebar */}
           <Route element={<PublicLayout />}>
             <Route path="/kiosk" element={<KioskPage />} />
+            <Route path="/queue" element={<QueuePage />} />
             <Route path="/display" element={<PublicDisplayPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
+            <Route path="/google-callback" element={<GoogleCallback />} />
             <Route path="/" element={<Navigate to="/login" replace />} />
           </Route>
 
@@ -27,6 +32,7 @@ function App() {
           <Route element={<AdminLayout />}>
             <Route path="/teller" element={<TellerDashboard />} />
             <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin/feedbacks" element={<FeedbackPage />} />
           </Route>
         </Routes>
       </BrowserRouter>

@@ -1,10 +1,13 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 
 interface AuthUser {
   userId: string;
   email: string;
-  fullName?: string;
+  fullName?: string; // Đổi thành fullName (viết thường) để dễ dùng trong component
+  role?: string;
+  phoneNumber?: string;
 }
 
 interface AuthContextType {
@@ -13,6 +16,7 @@ interface AuthContextType {
   logout: () => void;
   isAuthenticated: boolean;
   loading: boolean;
+  userRole: string | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -28,8 +32,28 @@ const peekJwt = (token: string): any => {
   }
 };
 
-// API base URL - thay đổi theo environment của bạn
-const API_BASE_URL = 'https://queuemanagement-hjaj.onrender.com/api';
+// Hàm lấy role từ token
+const getRoleFromToken = (token: string): string | null => {
+  const decoded = peekJwt(token);
+  console.log('Decoded JWT:', decoded);
+  
+  if (decoded) {
+    const role = decoded['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] ||
+                 decoded['role'] ||
+                 decoded['Role'] ||
+                 null;
+    
+    console.log('Extracted role:', role);
+    return role;
+  }
+  return null;
+};
+
+// API base URL
+const API_BASE_URL =
+  window.location.hostname === "localhost"
+    ? "https://localhost:7164/api"
+    : "https://queuemanagement-hjaj.onrender.com/api";
 
 // Tạo axios instance với interceptor để tự động gắn token
 const apiClient = axios.create({
@@ -52,25 +76,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Hàm lấy thông tin user từ API
   const fetchUserInfo = async (userId: string, token: string): Promise<AuthUser | null> => {
     try {
-      const response = await apiClient.get(`https://queuemanagement-hjaj.onrender.com/api/v1/users/${userId}`);
+      const response = await apiClient.get(`/v1/users/${userId}`);
       const userData = response.data;
-       console.log('response:', response); // Debug log
-      console.log('User data from API:', userData); // Debug log
+      console.log('User data from API:', userData);
+      console.log('FullName from API:', userData.FullName); // Debug: Kiểm tra FullName
       
+      // Lấy role từ token
+      const role = getRoleFromToken(token);
+      console.log('Role from token in fetchUserInfo:', role);
+      
+      // Map dữ liệu từ API response (UserDto)
       return {
-        userId: userData.Id,
-        email: userData.email || userData.Email || '',
-        fullName: userData.fullName || userData.FullName || userData.name || '',
+        userId: userData.Id || userData.id || userId, // Lấy Id (viết hoa I)
+        email: userData.Email || userData.email || '', // Lấy Email (viết hoa E)
+        fullName: userData.FullName || userData.fullName || '', // Lấy FullName (viết hoa F)
+        phoneNumber: userData.PhoneNumber || userData.phoneNumber || '', // Lấy PhoneNumber (viết hoa P)
+        role: role || userData.Role || userData.role || '',
       };
     } catch (error) {
       console.error('Failed to fetch user info:', error);
-      console.log('userId',userId); // Debug log
       // Nếu API fail, vẫn dùng thông tin từ JWT
       const decoded = peekJwt(token);
+      const role = getRoleFromToken(token);
+      console.log('Fallback - Role from token:', role);
+      
       return {
         userId: userId,
         email: decoded?.email || decoded?.['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'] || '',
         fullName: decoded?.name || decoded?.['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'] || '',
+        role: role || '',
       };
     }
   };
@@ -81,22 +115,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (token) {
         const decoded = peekJwt(token);
         if (decoded) {
-          // Lấy userId từ JWT
+          // Lấy userId từ claim 'sub' trong token
           const userId = decoded.sub || 
                         decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'] || 
                         decoded.nameid;
           
+          console.log('UserId from token:', userId);
+          
           if (userId) {
-            // Gọi API lấy thông tin chi tiết user
             const userInfo = await fetchUserInfo(userId, token);
-            console.log('Final user info:', userInfo); // Debug log
+            console.log('Final user info:', userInfo);
             setUser(userInfo);
           } else {
-            // Fallback nếu không có userId trong JWT
+            console.warn('No userId found in token');
+            const role = getRoleFromToken(token);
             setUser({
               userId: '',
               email: decoded.email || decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'] || '',
               fullName: decoded.name || decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'] || '',
+              role: role || '',
             });
           }
         }
@@ -108,41 +145,72 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const login = async (token: string) => {
+    console.log('Login - Received token:', token.substring(0, 50) + '...');
+    
     localStorage.setItem('accessToken', token);
     const decoded = peekJwt(token);
+    console.log('Login - Decoded JWT:', decoded);
     
-    if (decoded) {
-      const userId = decoded.sub || 
-                    decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'] || 
-                    decoded.nameid;
+    // Lấy role ngay lập tức từ token
+    const role = getRoleFromToken(token);
+    console.log('Login - Extracted role:', role);
+    
+    // Lưu role vào localStorage để dùng sau
+    if (role) {
+      localStorage.setItem('userRole', role);
+    }
+    
+    // Lấy userId từ token
+    const userId = decoded?.sub;
+                  
+    
+    console.log('Login - UserId from token:', userId);
+    
+    if (userId) {
+      // Gọi API lấy thông tin chi tiết user
+      const userInfo = await fetchUserInfo(userId, token);
+      console.log('Login - Final user info:', userInfo);
+      setUser(userInfo);
       
-      if (userId) {
-        // Gọi API lấy thông tin user chi tiết
-        const userInfo = await fetchUserInfo(userId, token);
-        setUser(userInfo);
-      } else {
-        // Fallback
-        setUser({
-          userId: '',
-          email: decoded.email || decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'] || '',
-          fullName: decoded.name || decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'] || '',
-        });
+      // Lưu thêm thông tin vào localStorage nếu cần
+      if (userInfo) {
+        localStorage.setItem('userFullName', userInfo.fullName || '');
+        localStorage.setItem('userEmail', userInfo.email || '');
+        localStorage.setItem('userPhone', userInfo.phoneNumber || '');
+        console.log('FullName:', userInfo.fullName); // Debug log
       }
+    } else {
+      console.warn('No userId found in token');
+      setUser({
+        userId: '',
+        email: decoded?.email || decoded?.['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'] || '',
+        fullName: decoded?.name || decoded?.['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'] || '',
+        role: role || '',
+      });
     }
   };
 
   const logout = () => {
     localStorage.removeItem('accessToken');
+    localStorage.removeItem('userRole');
+    // localStorage.removeItem('userFullName');
+    // localStorage.removeItem('userEmail');
+    // localStorage.removeItem('userPhone');
     setUser(null);
   };
 
+  const userRole = user?.role || localStorage.getItem('userRole') || null;
+
   if (loading) {
-    // Có thể return loading spinner nếu muốn
-    return null;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
   }
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isAuthenticated: !!user, loading }}>
+    <AuthContext.Provider value={{ user, login, logout, isAuthenticated: !!user, loading, userRole }}>
       {children}
     </AuthContext.Provider>
   );

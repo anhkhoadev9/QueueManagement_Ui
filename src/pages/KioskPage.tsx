@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Sparkles, Printer, User, Phone, ArrowRight, Activity } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Sparkles, Printer, User, Phone, ArrowRight, Activity, Users, Star, MessageSquare, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
-const API_BASE_URL = 'https://queuemanagement-hjaj.onrender.com/api/v1';
-
+//const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 interface ServiceItem {
   Id: string;
   Name: string;
@@ -11,6 +12,7 @@ interface ServiceItem {
 }
 
 const KioskPage = () => {
+  const navigate = useNavigate();
   const [services, setServices] = useState<ServiceItem[]>([]);
   const [loadingServices, setLoadingServices] = useState(true);
   
@@ -19,8 +21,16 @@ const KioskPage = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
   
   const [ticketNo, setTicketNo] = useState<string | null>(null);
+  const [ticketId, setTicketId] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState('');
+
+  // Feedback state
+  const [feedbackRating, setFeedbackRating] = useState(0);
+  const [feedbackHover, setFeedbackHover] = useState(0);
+  const [feedbackComment, setFeedbackComment] = useState('');
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
+  const [feedbackLoading, setFeedbackLoading] = useState(false);
 
   const { user } = useAuth();
 
@@ -100,7 +110,13 @@ const KioskPage = () => {
       data?.TicketNumber ||
       (data?.id ? data.id.substring(0, 4) : `T${Date.now()}`);
 
+    const generatedTicketId = data?.id || data?.Id || null;
+    setTicketId(generatedTicketId);
     setTicketNo(ticketNumber);
+    // Reset feedback state for new ticket
+    setFeedbackRating(0);
+    setFeedbackComment('');
+    setFeedbackSubmitted(false);
 
   } catch (err: any) {
     console.error(err);
@@ -111,9 +127,39 @@ const KioskPage = () => {
 };
   const handleReset = () => {
     setTicketNo(null);
+    setTicketId(null);
     setSelectedService(null);
     setCustomerName('');
     setPhoneNumber('');
+    setFeedbackRating(0);
+    setFeedbackComment('');
+    setFeedbackSubmitted(false);
+  };
+
+  const handleSubmitFeedback = async () => {
+    if (!feedbackRating || !ticketId) return;
+    try {
+      setFeedbackLoading(true);
+      const token = localStorage.getItem('accessToken');
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const body: any = { rating: feedbackRating };
+      if (feedbackComment.trim()) body.comment = feedbackComment.trim();
+      if (selectedService?.Id) body.serviceId = selectedService.Id;
+      if (user?.userId) body.userId = user.userId;
+
+      await fetch(`${API_BASE_URL}/tickets/${ticketId}/feedback`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(body),
+      });
+      setFeedbackSubmitted(true);
+    } catch (err) {
+      console.error('Feedback submit error:', err);
+    } finally {
+      setFeedbackLoading(false);
+    }
   };
 
   // 1. TICKET GENERATED VIEW
@@ -139,13 +185,74 @@ const KioskPage = () => {
             </div>
           </div>
           
-          <p className="text-gray-600 mb-8 text-center font-medium leading-relaxed">
+          <p className="text-gray-600 mb-6 text-center font-medium leading-relaxed">
             Xin vui lòng ngồi chờ đến lượt tại khu vực sảnh giao dịch.
           </p>
-          
+
+          {/* Inline Feedback Form */}
+          <div className="w-full border border-gray-100 rounded-2xl p-5 bg-gray-50/60 mb-4">
+            {feedbackSubmitted ? (
+              <div className="flex flex-col items-center gap-2 py-2 text-green-600">
+                <CheckCircle2 className="w-8 h-8" />
+                <p className="font-semibold text-sm">Cảm ơn bạn đã đánh giá!</p>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center gap-2 mb-3">
+                  <MessageSquare className="w-4 h-4 text-vietin-blue" />
+                  <p className="text-sm font-bold text-gray-700">Bạn cảm thấy thế nào? (Tùy chọn)</p>
+                </div>
+                {/* Star Rating */}
+                <div className="flex gap-1 justify-center mb-3">
+                  {[1,2,3,4,5].map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => setFeedbackRating(s)}
+                      onMouseEnter={() => setFeedbackHover(s)}
+                      onMouseLeave={() => setFeedbackHover(0)}
+                      className="transition-transform hover:scale-110"
+                    >
+                      <Star
+                        className={`w-8 h-8 transition-colors ${
+                          s <= (feedbackHover || feedbackRating)
+                            ? 'fill-yellow-400 text-yellow-400'
+                            : 'text-gray-300'
+                        }`}
+                      />
+                    </button>
+                  ))}
+                </div>
+                {/* Comment */}
+                <textarea
+                  value={feedbackComment}
+                  onChange={(e) => setFeedbackComment(e.target.value)}
+                  placeholder="Nhận xét của bạn (không bắt buộc)..."
+                  rows={2}
+                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-vietin-blue bg-white mb-3"
+                />
+                <button
+                  onClick={handleSubmitFeedback}
+                  disabled={!feedbackRating || feedbackLoading}
+                  className="w-full py-2 px-4 bg-vietin-blue text-white text-sm font-bold rounded-xl hover:bg-vietin-darkBlue transition-all disabled:opacity-40 active:scale-95"
+                >
+                  {feedbackLoading ? 'Đang gửi...' : 'Gửi đánh giá'}
+                </button>
+              </>
+            )}
+          </div>
+
           <button onClick={handleReset} className="btn-primary w-full flex items-center justify-center space-x-2 group">
             <span>Tiếp tục lấy số khác</span>
             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+          </button>
+
+          <button
+            onClick={() => navigate('/queue')}
+            className="mt-3 w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 border-vietin-blue text-vietin-blue hover:bg-vietin-lightBlue/40 font-semibold transition-all group"
+          >
+            <Users className="w-5 h-5" />
+            <span>Xem danh sách hàng chờ</span>
           </button>
         </div>
       </div>
@@ -199,7 +306,7 @@ const KioskPage = () => {
   return (
     <div className="flex-1 flex flex-col items-center justify-center min-h-[70vh] w-full animate-in slide-in-from-bottom-4 fade-in duration-700">
       <div className="text-center mb-12 max-w-3xl">
-        <h2 className="text-4xl md:text-5xl font-black mb-6 text-gradient tracking-tight">
+        <h2 className="text-4xl md:text-5xl font-black h-20 text-vietin-bluemb-6 text-gradient tracking-tight">
           Chọn dịch vụ Barber / Salon
         </h2>
         <p className="text-xl text-gray-600 font-medium leading-relaxed">

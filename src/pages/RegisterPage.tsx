@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 
-const API_BASE_URL = 'https://queuemanagement-hjaj.onrender.com/api/v1';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const RegisterPage = () => {
   const navigate = useNavigate();

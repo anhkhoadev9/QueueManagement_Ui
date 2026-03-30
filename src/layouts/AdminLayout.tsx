@@ -8,7 +8,7 @@ const AdminLayout = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-const API_BASE_URL = import.meta.env.API_BASE_URL;
+const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const navItems = [
     { path: '/teller', label: 'Quầy giao dịch', icon: <Users className="w-5 h-5" />, exact: true },
     { path: '/admin', label: 'Quản lý Dịch vụ', icon: <LayoutDashboard className="w-5 h-5" />, exact: true },
@@ -50,7 +50,7 @@ const API_BASE_URL = import.meta.env.API_BASE_URL;
       const token = localStorage.getItem('accessToken');
       
       if (refreshToken && token) {
-        await fetch(`${API_BASE_URL}/auth/logout`, {
+        await fetch(`${VITE_API_BASE_URL}/auth/logout`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

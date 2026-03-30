@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 
-const API_BASE_URL = import.meta.env.API_BASE_URL;
+const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const RegisterPage = () => {
   const navigate = useNavigate();
@@ -46,7 +46,7 @@ const RegisterPage = () => {
         ConfirmPassword: formData.confirmPassword
       }).toString();
 
-      const response = await fetch(`${API_BASE_URL}/auth/register?${queryParams}`, {
+      const response = await fetch(`${VITE_API_BASE_URL}/auth/register?${queryParams}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       });

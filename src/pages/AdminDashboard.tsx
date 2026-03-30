@@ -2,9 +2,9 @@
 import { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, RefreshCw, Clock, Hash, Star, ArrowRight, XCircle, UserMinus } from 'lucide-react';
 import { Link } from 'react-router-dom';
-const API_BASE_URL = import.meta.env.API_BASE_URL;
-//const API_BASE_URL = 'https://queuemanagement-hjaj.onrender.com/api/v1';
-//const API_BASE_URL = 'https://queuemanagement-hjaj.onrender.com/api/v1';
+const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+//const VITE_API_BASE_URL = 'https://queuemanagement-hjaj.onrender.com/api/v1';
+//const VITE_API_BASE_URL = 'https://queuemanagement-hjaj.onrender.com/api/v1';
 
 interface Ticket {
   Id: string;
@@ -162,7 +162,7 @@ const AdminDashboard = () => {
     try {
       setLoading(true);
       // Gọi API lấy tất cả tickets (hoặc tickets đang hoạt động)
-      const res = await fetch(`${API_BASE_URL}/tickets/waitings`, { headers: authHeaders() });
+      const res = await fetch(`${VITE_API_BASE_URL}/tickets/waitings`, { headers: authHeaders() });
       if (res.ok) {
         const data = await res.json();
         setAllTickets(data);
@@ -178,7 +178,7 @@ const AdminDashboard = () => {
   const fetchRecentFeedbacks = async () => {
     try {
       setFeedbackLoading(true);
-      const res = await fetch(`${API_BASE_URL}/feedbacks?PageNumber=1&PageSize=3`, { headers: authHeaders() });
+      const res = await fetch(`${VITE_API_BASE_URL}/feedbacks?PageNumber=1&PageSize=3`, { headers: authHeaders() });
       if (res.ok) {
         const data = await res.json();
         const items = data.items ?? data ?? [];

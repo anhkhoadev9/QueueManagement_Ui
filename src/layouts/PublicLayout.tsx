@@ -7,7 +7,7 @@
 // import { User, LogOut, Key, ChevronDown } from 'lucide-react';
 // import ChangePasswordModal from '../components/ChangePasswordModal';
 
-// const API_BASE_URL = 'https://queuemanagement-hjaj.onrender.com/api/v1';
+// const VITE_API_BASE_URL = 'https://queuemanagement-hjaj.onrender.com/api/v1';
 
 // const PublicLayout = () => {
 //   const { user, isAuthenticated, logout } = useAuth();
@@ -43,7 +43,7 @@
 //   try {
 //     setChangePasswordLoading(true);
     
-//     const response = await fetch(`${API_BASE_URL}/auth/change-password`, {
+//     const response = await fetch(`${VITE_API_BASE_URL}/auth/change-password`, {
 //       method: 'POST',
 //       headers: {
 //         'Content-Type': 'application/json',
@@ -242,8 +242,8 @@ import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { User, LogOut, Key, ChevronDown } from 'lucide-react';
 import ChangePasswordModal from '../components/ChangePasswordModal';
-const API_BASE_URL = import.meta.env.API_BASE_URL;
-// const API_BASE_URL = 'https://queuemanagement-hjaj.onrender.com/api/v1';
+const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+// const VITE_API_BASE_URL = 'https://queuemanagement-hjaj.onrender.com/api/v1';
 
 const PublicLayout = () => {
   const { user, isAuthenticated, logout } = useAuth();
@@ -280,7 +280,7 @@ const PublicLayout = () => {
     try {
       setIsChangingPassword(true);
       
-      const response = await fetch(`${API_BASE_URL}/auth/change-password`, {
+      const response = await fetch(`${VITE_API_BASE_URL}/auth/change-password`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

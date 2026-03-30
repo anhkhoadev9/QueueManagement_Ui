@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import {  CheckCircle, XCircle, User as UserIcon, Loader2, RefreshCw } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
-//const API_BASE_URL = import.meta.env.API_BASE_URL;
-const API_BASE_URL = import.meta.env.API_BASE_URL;
+//const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 interface Ticket {
   Id: string;
   TicketNumber: string;
@@ -27,7 +27,7 @@ const fetchCurrentTicket = async () => {
   try {
     const token = localStorage.getItem('accessToken');
 
-    const res = await fetch(`${API_BASE_URL}/tickets/current`, {
+    const res = await fetch(`${VITE_API_BASE_URL}/tickets/current`, {
       headers: { Authorization: `Bearer ${token}` }
     });
 
@@ -48,7 +48,7 @@ const fetchCurrentTicket = async () => {
   const fetchWaitingQueue = async () => {
     try {
       const token = localStorage.getItem('accessToken');
-      const res = await fetch(`${API_BASE_URL}/tickets/waiting`, {
+      const res = await fetch(`${VITE_API_BASE_URL}/tickets/waiting`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -80,7 +80,7 @@ const handleCallNext = async () => {
 
     const token = localStorage.getItem("accessToken");
 
-    const res = await fetch(`${API_BASE_URL}/tickets/call-next`, {
+    const res = await fetch(`${VITE_API_BASE_URL}/tickets/call-next`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -124,7 +124,7 @@ const handleCallNext = async () => {
     try {
       setActionLoading(true);
       const token = localStorage.getItem('accessToken');
-      const res = await fetch(`${API_BASE_URL}/tickets`, {
+      const res = await fetch(`${VITE_API_BASE_URL}/tickets`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

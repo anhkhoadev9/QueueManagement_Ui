@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Sparkles, Printer, User, Phone, ArrowRight, Activity, Users, Star, MessageSquare, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
-//const API_BASE_URL = import.meta.env.API_BASE_URL;
-const API_BASE_URL = import.meta.env.API_BASE_URL;
+//const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 interface ServiceItem {
   Id: string;
   Name: string;
@@ -49,7 +49,7 @@ const KioskPage = () => {
         if (token) headers['Authorization'] = `Bearer ${token}`;
 
         // Uses paginated endpoint without strict parameters to get list
-        const res = await fetch(`${API_BASE_URL}/services?PageNumber=1&PageSize=10&IncludeTicketDetails=true&MaxPageSize=50`, { headers });
+        const res = await fetch(`${VITE_API_BASE_URL}/services?PageNumber=1&PageSize=10&IncludeTicketDetails=true&MaxPageSize=50`, { headers });
         if (res.ok) {
           const data = await res.json();
           // Adjust based on your GetPaginatedResultServiceQuery response shape: (e.g. data.items, data.data)
@@ -80,7 +80,7 @@ const KioskPage = () => {
 
     const token = localStorage.getItem('accessToken');
 
-    const res = await fetch(`${API_BASE_URL}/tickets`, {
+    const res = await fetch(`${VITE_API_BASE_URL}/tickets`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -149,7 +149,7 @@ const KioskPage = () => {
       if (selectedService?.Id) body.serviceId = selectedService.Id;
       if (user?.userId) body.userId = user.userId;
 
-      await fetch(`${API_BASE_URL}/tickets/${ticketId}/feedback`, {
+      await fetch(`${VITE_API_BASE_URL}/tickets/${ticketId}/feedback`, {
         method: 'POST',
         headers,
         body: JSON.stringify(body),

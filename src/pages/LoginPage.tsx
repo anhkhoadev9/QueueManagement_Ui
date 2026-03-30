@@ -4,8 +4,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
-//const API_BASE_URL = import.meta.env.API_BASE_URL;
-const API_BASE_URL = import.meta.env.API_BASE_URL;
+//const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 const REDIRECT_URI = import.meta.env.VITE_GOOGLE_REDIRECT_URI;
 // Các component nhỏ để tái sử dụng
@@ -258,7 +258,7 @@ const LoginPage = () => {
       setError('');
       setSuccessMessage('');
       
-      const response = await fetch(`${API_BASE_URL}/auth/login`, {
+      const response = await fetch(`${VITE_API_BASE_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ loginInfo, password }),
@@ -308,7 +308,7 @@ const handleGoogleLogin = () => {
 };
   // Handle forgot password
   const handleForgotPassword = async (email: string) => {
-    const response = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
+    const response = await fetch(`${VITE_API_BASE_URL}/auth/forgot-password`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email }),
@@ -329,7 +329,7 @@ const handleGoogleLogin = () => {
       throw new Error('Vui lòng đăng nhập trước');
     }
 
-    const response = await fetch(`${API_BASE_URL}/auth/change-password`, {
+    const response = await fetch(`${VITE_API_BASE_URL}/auth/change-password`, {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json',

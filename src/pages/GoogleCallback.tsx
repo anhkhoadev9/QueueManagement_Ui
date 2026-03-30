@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 
-const API_BASE_URL = import.meta.env.API_BASE_URL;
+const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const GoogleCallback = () => {
     const navigate = useNavigate();
@@ -21,7 +21,7 @@ const GoogleCallback = () => {
         const fetchGoogleLogin = async () => {
             try {
                 const response = await fetch(
-                    `${API_BASE_URL}/auth/google-callback?code=${code}`,
+                    `${VITE_API_BASE_URL}/auth/google-callback?code=${code}`,
                     {
                         method: "POST",
                         headers: {

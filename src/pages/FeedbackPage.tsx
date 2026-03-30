@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { MessageSquare, Trash2, RefreshCw, Star, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 
-//const API_BASE_URL = import.meta.env.API_BASE_URL;
-const API_BASE_URL = import.meta.env.API_BASE_URL;
+//const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 interface FeedbackDto {
   id: string;
   comment?: string;
@@ -64,7 +64,7 @@ const FeedbackPage = () => {
         PageNumber: String(pageNum),
         PageSize: String(PAGE_SIZE),
       });
-      const res = await fetch(`${API_BASE_URL}/feedbacks?${params}`, {
+      const res = await fetch(`${VITE_API_BASE_URL}/feedbacks?${params}`, {
         headers: authHeaders(),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -89,7 +89,7 @@ const FeedbackPage = () => {
     try {
       setDeletingId(id);
       const headers = { ...authHeaders(), 'Content-Type': 'application/json' };
-      const res = await fetch(`${API_BASE_URL}/feedbacks/${id}`, {
+      const res = await fetch(`${VITE_API_BASE_URL}/feedbacks/${id}`, {
         method: 'DELETE',
         headers,
       });

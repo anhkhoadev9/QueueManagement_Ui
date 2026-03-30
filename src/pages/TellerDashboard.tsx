@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import {  CheckCircle, XCircle, User as UserIcon, Loader2, RefreshCw } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
-//const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+//const API_BASE_URL = import.meta.env.API_BASE_URL;
+const API_BASE_URL = import.meta.env.API_BASE_URL;
 interface Ticket {
   Id: string;
   TicketNumber: string;

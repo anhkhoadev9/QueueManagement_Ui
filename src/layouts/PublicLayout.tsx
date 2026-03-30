@@ -242,7 +242,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { User, LogOut, Key, ChevronDown } from 'lucide-react';
 import ChangePasswordModal from '../components/ChangePasswordModal';
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const API_BASE_URL = import.meta.env.API_BASE_URL;
 // const API_BASE_URL = 'https://queuemanagement-hjaj.onrender.com/api/v1';
 
 const PublicLayout = () => {

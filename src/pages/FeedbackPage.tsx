@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { MessageSquare, Trash2, RefreshCw, Star, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 
-//const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+//const API_BASE_URL = import.meta.env.API_BASE_URL;
+const API_BASE_URL = import.meta.env.API_BASE_URL;
 interface FeedbackDto {
   id: string;
   comment?: string;

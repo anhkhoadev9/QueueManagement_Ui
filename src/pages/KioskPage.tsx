@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Sparkles, Printer, User, Phone, ArrowRight, Activity, Users, Star, MessageSquare, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
-//const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+//const API_BASE_URL = import.meta.env.API_BASE_URL;
+const API_BASE_URL = import.meta.env.API_BASE_URL;
 interface ServiceItem {
   Id: string;
   Name: string;

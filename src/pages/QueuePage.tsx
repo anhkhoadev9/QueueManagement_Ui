@@ -2,7 +2,7 @@
 // import { useNavigate } from 'react-router-dom';
 // import { Users, RefreshCw, ArrowLeft, Clock, CheckCircle2, PhoneCall, Activity } from 'lucide-react';
 
-// const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+// const API_BASE_URL = import.meta.env.API_BASE_URL;
 
 // interface TicketDto {
 //   Id: string;
@@ -262,8 +262,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Users, RefreshCw, ArrowLeft, Clock, CheckCircle2, Activity, Loader2 } from 'lucide-react';
 
-//const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+//const API_BASE_URL = import.meta.env.API_BASE_URL;
+const API_BASE_URL = import.meta.env.API_BASE_URL;
 interface TicketDto {
   Id: string;
   TicketNumber: string;

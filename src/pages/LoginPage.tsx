@@ -6,8 +6,8 @@ import { useAuth } from '../contexts/AuthContext';
 
 //const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-const REDIRECT_URI = import.meta.env.VITE_GOOGLE_REDIRECT_URI;
+const VITE_GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+const VITE_GOOGLE_REDIRECT_URI = import.meta.env.VITE_GOOGLE_REDIRECT_URI;
 // Các component nhỏ để tái sử dụng
 const LoadingSpinner = () => (
   <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -297,8 +297,8 @@ const LoginPage = () => {
   };
 const handleGoogleLogin = () => {
   const url = `https://accounts.google.com/o/oauth2/v2/auth?` +
-    `client_id=${GOOGLE_CLIENT_ID}` +
-    `&redirect_uri=${REDIRECT_URI }` +
+    `client_id=${VITE_GOOGLE_CLIENT_ID}` +
+    `&redirect_uri=${VITE_GOOGLE_REDIRECT_URI }` +
     `&response_type=code` +
     `&scope=openid email profile`+
     `&prompt=select_account`;

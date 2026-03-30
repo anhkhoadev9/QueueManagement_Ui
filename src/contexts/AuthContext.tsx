@@ -53,7 +53,7 @@ const getRoleFromToken = (token: string): string | null => {
 const API_BASE_URL =
   window.location.hostname === "localhost"
     ? "https://localhost:7164/api"
-    : "https://queuemanagement-hjaj.onrender.com/api";
+    : `${import.meta.env.VITE_API_BASE_URL}`;
 
 // Tạo axios instance với interceptor để tự động gắn token
 const apiClient = axios.create({

@@ -3,7 +3,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import AdminLayout from './layouts/AdminLayout';
 import PublicLayout from './layouts/PublicLayout';
 import KioskPage from './pages/KioskPage';
-import PublicDisplayPage from './pages/PublicDisplayPage';
+ 
 import TellerDashboard from './pages/TellerDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import LoginPage from './pages/LoginPage';
@@ -21,7 +21,7 @@ function App() {
           <Route element={<PublicLayout />}>
             <Route path="/kiosk" element={<KioskPage />} />
             <Route path="/queue" element={<QueuePage />} />
-            <Route path="/display" element={<PublicDisplayPage />} />
+           
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/google-callback" element={<GoogleCallback />} />

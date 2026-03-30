@@ -6,6 +6,7 @@ interface ChangePasswordModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (currentPassword: string, newPassword: string) => Promise<void>;
+  isLoading?: boolean;
 }
 
 const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen, onClose, onSubmit }) => {

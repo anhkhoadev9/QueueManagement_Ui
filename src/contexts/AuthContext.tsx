@@ -53,7 +53,7 @@ const getRoleFromToken = (token: string): string | null => {
 const VITE_API_BASE_URL =
   window.location.hostname === "localhost"
     ? "https://localhost:7164/api"
-    : `${import.meta.env.VITE_VITE_API_BASE_URL}`;
+    : `${import.meta.env.VITE_API_BASE_URL}`;
 
 // Tạo axios instance với interceptor để tự động gắn token
 const apiClient = axios.create({

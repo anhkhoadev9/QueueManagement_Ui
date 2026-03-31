@@ -35,7 +35,7 @@ const peekJwt = (token: string): any => {
 // Hàm lấy role từ token
 const getRoleFromToken = (token: string): string | null => {
   const decoded = peekJwt(token);
-  console.log('Decoded JWT:', decoded);
+  
   
   if (decoded) {
     const role = decoded['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] ||
@@ -43,7 +43,7 @@ const getRoleFromToken = (token: string): string | null => {
                  decoded['Role'] ||
                  null;
     
-    console.log('Extracted role:', role);
+    
     return role;
   }
   return null;
@@ -76,14 +76,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Hàm lấy thông tin user từ API
   const fetchUserInfo = async (userId: string, token: string): Promise<AuthUser | null> => {
     try {
-      const response = await apiClient.get(`/v1/users/${userId}`);
+      const response = await apiClient.get(`/users/${userId}`);
       const userData = response.data;
-      console.log('User data from API:', userData);
-      console.log('FullName from API:', userData.FullName); // Debug: Kiểm tra FullName
       
       // Lấy role từ token
       const role = getRoleFromToken(token);
-      console.log('Role from token in fetchUserInfo:', role);
+       
       
       // Map dữ liệu từ API response (UserDto)
       return {
@@ -98,7 +96,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Nếu API fail, vẫn dùng thông tin từ JWT
       const decoded = peekJwt(token);
       const role = getRoleFromToken(token);
-      console.log('Fallback - Role from token:', role);
+      
       
       return {
         userId: userId,

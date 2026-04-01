@@ -32,7 +32,7 @@ function App() {
           <Route element={<AdminLayout />}>
             <Route path="/teller" element={<TellerDashboard />} />
             <Route path="/admin" element={<AdminDashboard />} />
-            <Route path="/admin/feedbacks" element={<FeedbackPage />} />
+            <Route path="/feedbacks" element={<FeedbackPage />} />
           </Route>
         </Routes>
       </BrowserRouter>

@@ -12,7 +12,7 @@ const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const navItems = [
     { path: '/teller', label: 'Quầy giao dịch', icon: <Users className="w-5 h-5" />, exact: true },
     { path: '/admin', label: 'Quản lý Dịch vụ', icon: <LayoutDashboard className="w-5 h-5" />, exact: true },
-    { path: '/admin/feedbacks', label: 'Đánh giá', icon: <MessageSquare className="w-5 h-5" />, exact: false },
+    { path: '/feedbacks', label: 'Đánh giá', icon: <MessageSquare className="w-5 h-5" />, exact: false },
   ];
 
   const isActive = (item: typeof navItems[0]) => {

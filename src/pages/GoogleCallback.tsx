@@ -52,11 +52,11 @@ const GoogleCallback = () => {
         fetchGoogleLogin();
     }, []);
 
-    return (
-        <div className="flex items-center justify-center h-screen">
-            <p>Đang xử lý đăng nhập Google...</p>
-        </div>
-    );
+    // return (
+    //     <div className="flex items-center justify-center h-screen">
+    //         <p>Đang xử lý đăng nhập Google...</p>
+    //     </div>
+    // );
 };
 
 

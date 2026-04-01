@@ -351,7 +351,7 @@ const QueuePage = () => {
       const headers: Record<string, string> = { accept: '*/*' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      const res = await fetch(`${VITE_API_BASE_URL}/tickets/waiting`, { headers });
+      const res = await fetch(`${VITE_API_BASE_URL}/tickets/waitings`, { headers });
 
       if (!res.ok) {
         if (res.status === 404) {

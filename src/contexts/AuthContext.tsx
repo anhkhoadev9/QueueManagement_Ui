@@ -5,7 +5,7 @@ import axios from 'axios';
 interface AuthUser {
   userId: string;
   email: string;
-  fullName?: string; // Đổi thành fullName (viết thường) để dễ dùng trong component
+  fullName?: string; 
   role?: string;
   phoneNumber?: string;
 }
@@ -118,11 +118,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                         decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'] || 
                         decoded.nameid;
           
-          console.log('UserId from token:', userId);
+         
           
           if (userId) {
             const userInfo = await fetchUserInfo(userId, token);
-            console.log('Final user info:', userInfo);
+            
             setUser(userInfo);
           } else {
             console.warn('No userId found in token');
@@ -143,15 +143,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const login = async (token: string) => {
-    console.log('Login - Received token:', token.substring(0, 50) + '...');
+   
     
     localStorage.setItem('accessToken', token);
     const decoded = peekJwt(token);
-    console.log('Login - Decoded JWT:', decoded);
+   
     
     // Lấy role ngay lập tức từ token
     const role = getRoleFromToken(token);
-    console.log('Login - Extracted role:', role);
+     
     
     // Lưu role vào localStorage để dùng sau
     if (role) {
@@ -162,12 +162,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const userId = decoded?.sub;
                   
     
-    console.log('Login - UserId from token:', userId);
+     
     
     if (userId) {
       // Gọi API lấy thông tin chi tiết user
       const userInfo = await fetchUserInfo(userId, token);
-      console.log('Login - Final user info:', userInfo);
+       
       setUser(userInfo);
       
       // Lưu thêm thông tin vào localStorage nếu cần
@@ -175,10 +175,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         localStorage.setItem('userFullName', userInfo.fullName || '');
         localStorage.setItem('userEmail', userInfo.email || '');
         localStorage.setItem('userPhone', userInfo.phoneNumber || '');
-        console.log('FullName:', userInfo.fullName); // Debug log
+         
       }
     } else {
-      console.warn('No userId found in token');
+       
       setUser({
         userId: '',
         email: decoded?.email || decoded?.['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'] || '',

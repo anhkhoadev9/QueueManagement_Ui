@@ -11,6 +11,8 @@ import RegisterPage from './pages/RegisterPage';
 import QueuePage from './pages/QueuePage';
 import FeedbackPage from './pages/FeedbackPage';
 import GoogleCallback from './pages/GoogleCallback';
+import NotFoundPage from './pages/NotFoundPage';
+import SubmitFeedbackPage from './pages/SubmitFeedbackPage';
 
 function App() {
   return (
@@ -25,6 +27,7 @@ function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/google-callback" element={<GoogleCallback />} />
+            <Route path="/submit-feedback" element={<SubmitFeedbackPage />} />
             <Route path="/" element={<Navigate to="/login" replace />} />
           </Route>
 
@@ -34,6 +37,9 @@ function App() {
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/feedbacks" element={<FeedbackPage />} />
           </Route>
+
+          {/* 404 Route */}
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
@@ -41,4 +47,5 @@ function App() {
 }
 
 export default App;
+
 

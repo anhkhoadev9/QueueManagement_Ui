@@ -272,8 +272,10 @@ const LoginPage = () => {
       const data = await response.json();
       
       const token = data.accessToken || data.AccessToken || data.token;
+      const refreshToken = data.refreshToken || data.RefreshToken;
+      
       if (token) {
-        await login(token);
+        await login(token, refreshToken);
       }
 
       // Wait for role to be updated

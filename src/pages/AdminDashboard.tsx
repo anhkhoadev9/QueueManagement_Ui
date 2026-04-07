@@ -2,9 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, RefreshCw, Clock, Hash, Star, ArrowRight, XCircle, UserMinus } from 'lucide-react';
 import { Link } from 'react-router-dom';
-const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-//const VITE_API_BASE_URL = 'https://queuemanagement-hjaj.onrender.com/api/v1';
-//const VITE_API_BASE_URL = 'https://queuemanagement-hjaj.onrender.com/api/v1';
+import { apiClient } from '../contexts/AuthContext';
 
 interface Ticket {
   Id: string;
@@ -151,23 +149,14 @@ const AdminDashboard = () => {
   const [recentFeedbacks, setRecentFeedbacks] = useState<FeedbackDto[]>([]);
   const [feedbackLoading, setFeedbackLoading] = useState(true);
 
-  const authHeaders = () => {
-    const token = localStorage.getItem('accessToken');
-    const h: any = { accept: '*/*' };
-    if (token) h['Authorization'] = `Bearer ${token}`;
-    return h;
-  };
 
   const fetchAllTickets = async () => {
     try {
       setLoading(true);
       // Gọi API lấy tất cả tickets (hoặc tickets đang hoạt động)
-      const res = await fetch(`${VITE_API_BASE_URL}/tickets/waitings`, { headers: authHeaders() });
-      if (res.ok) {
-        const data = await res.json();
-        setAllTickets(data);
-        setLastUpdated(new Date());
-      }
+      const res = await apiClient.get('/tickets/waitings');
+      setAllTickets(res.data);
+      setLastUpdated(new Date());
     } catch (err) {
       console.error("Failed to fetch tickets", err);
     } finally {
@@ -178,12 +167,12 @@ const AdminDashboard = () => {
   const fetchRecentFeedbacks = async () => {
     try {
       setFeedbackLoading(true);
-      const res = await fetch(`${VITE_API_BASE_URL}/feedbacks?PageNumber=1&PageSize=3`, { headers: authHeaders() });
-      if (res.ok) {
-        const data = await res.json();
-        const items = data.items ?? data ?? [];
-        setRecentFeedbacks(Array.isArray(items) ? items : []);
-      }
+      const res = await apiClient.get('/feedbacks', {
+        params: { PageNumber: 1, PageSize: 3 }
+      });
+      const data = res.data;
+      const items = data.items ?? data ?? [];
+      setRecentFeedbacks(Array.isArray(items) ? items : []);
     } catch (err) {
       console.error("Failed to fetch feedbacks", err);
     } finally {

@@ -261,9 +261,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Users, RefreshCw, ArrowLeft, Clock, CheckCircle2, Activity, Loader2 } from 'lucide-react';
+import { apiClient } from '../contexts/AuthContext';
 
-//const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 interface TicketDto {
   Id: string;
   TicketNumber: string;
@@ -347,20 +346,10 @@ const QueuePage = () => {
     try {
       setError('');
       setLoading(true);
-      const token = localStorage.getItem('accessToken');
-      const headers: Record<string, string> = { accept: '*/*' };
-      if (token) headers['Authorization'] = `Bearer ${token}`;
+      
+      const res = await apiClient.get('/tickets/waitings');
 
-      const res = await fetch(`${VITE_API_BASE_URL}/tickets/waitings`, { headers });
-
-      if (!res.ok) {
-        if (res.status === 404) {
-          throw new Error('API endpoint không tồn tại. Vui lòng kiểm tra lại đường dẫn API.');
-        }
-        throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-      }
-
-      const data = await res.json();
+      const data = res.data;
       console.log('API Response:', data);
 
       let list: TicketDto[] = [];

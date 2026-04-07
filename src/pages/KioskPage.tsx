@@ -1,10 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Sparkles, Printer, User, Phone, ArrowRight, Activity, Users, Star, MessageSquare, CheckCircle2 } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
+import { Sparkles, Printer, User, Phone, ArrowRight, Activity, Users } from 'lucide-react';
+import { useAuth, apiClient } from '../contexts/AuthContext';
 
-//const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 interface ServiceItem {
   Id: string;
   Name: string;
@@ -25,12 +23,6 @@ const KioskPage = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState('');
 
-  // Feedback state
-  const [feedbackRating, setFeedbackRating] = useState(0);
-  const [feedbackHover, setFeedbackHover] = useState(0);
-  const [feedbackComment, setFeedbackComment] = useState('');
-  const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
-  const [feedbackLoading, setFeedbackLoading] = useState(false);
 
   const { user } = useAuth();
 
@@ -44,19 +36,21 @@ const KioskPage = () => {
   useEffect(() => {
     const fetchServices = async () => {
       try {
-        const token = localStorage.getItem('accessToken');
-        const headers: any = { 'accept': '*/*' };
-        if (token) headers['Authorization'] = `Bearer ${token}`;
-
-        // Uses paginated endpoint without strict parameters to get list
-        const res = await fetch(`${VITE_API_BASE_URL}/services?PageNumber=1&PageSize=10&IncludeTicketDetails=true&MaxPageSize=50`, { headers });
-        if (res.ok) {
-          const data = await res.json();
-          // Adjust based on your GetPaginatedResultServiceQuery response shape: (e.g. data.items, data.data)
-         const items = data.Items || data.items || data.data || data;
+        setLoadingServices(true);
+        // apiClient đã tự động gắn Authorization header qua interceptor
+        const res = await apiClient.get('/services', {
+          params: {
+            PageNumber: 1,
+            PageSize: 10,
+            IncludeTicketDetails: true,
+            MaxPageSize: 50
+          }
+        });
+        
+        const data = res.data;
+        const items = data.Items || data.items || data.data || data;
         console.log("Fetched services:", items);
-          setServices(Array.isArray(items) ? items : []);
-        }
+        setServices(Array.isArray(items) ? items : []);
       } catch (err) {
         console.error("Failed to fetch services", err);
       } finally {
@@ -78,31 +72,13 @@ const KioskPage = () => {
     setIsGenerating(true);
     setError('');
 
-    const token = localStorage.getItem('accessToken');
-
-    const res = await fetch(`${VITE_API_BASE_URL}/tickets`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token && { Authorization: `Bearer ${token}` })
-      },
-      body: JSON.stringify({
-        customerName,
-        phoneNumber,
-        serviceId: selectedService.Id
-      })
+    const res = await apiClient.post('/tickets', {
+      customerName,
+      phoneNumber,
+      serviceId: selectedService.Id
     });
 
-    // ❗ parse JSON trực tiếp
-    const data = await res.json().catch(() => null);
-
-    if (!res.ok) {
-      throw new Error(
-        data?.message ||
-        data?.title ||
-        'Không thể tạo vé.'
-      );
-    }
+    const data = res.data;
 
     // ✅ backend trả ticket
     const ticketNumber =
@@ -113,10 +89,7 @@ const KioskPage = () => {
     const generatedTicketId = data?.id || data?.Id || null;
     setTicketId(generatedTicketId);
     setTicketNo(ticketNumber);
-    // Reset feedback state for new ticket
-    setFeedbackRating(0);
-    setFeedbackComment('');
-    setFeedbackSubmitted(false);
+    setTicketNo(ticketNumber);
 
   } catch (err: any) {
     console.error(err);
@@ -131,36 +104,8 @@ const KioskPage = () => {
     setSelectedService(null);
     setCustomerName('');
     setPhoneNumber('');
-    setFeedbackRating(0);
-    setFeedbackComment('');
-    setFeedbackSubmitted(false);
   };
 
-  const handleSubmitFeedback = async () => {
-    if (!feedbackRating || !ticketId) return;
-    try {
-      setFeedbackLoading(true);
-      const token = localStorage.getItem('accessToken');
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-      if (token) headers['Authorization'] = `Bearer ${token}`;
-
-      const body: any = { rating: feedbackRating };
-      if (feedbackComment.trim()) body.comment = feedbackComment.trim();
-      if (selectedService?.Id) body.serviceId = selectedService.Id;
-      if (user?.userId) body.userId = user.userId;
-
-      await fetch(`${VITE_API_BASE_URL}/tickets/${ticketId}/feedback`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(body),
-      });
-      setFeedbackSubmitted(true);
-    } catch (err) {
-      console.error('Feedback submit error:', err);
-    } finally {
-      setFeedbackLoading(false);
-    }
-  };
 
   // 1. TICKET GENERATED VIEW
   if (ticketNo) {
@@ -189,57 +134,15 @@ const KioskPage = () => {
             Xin vui lòng ngồi chờ đến lượt tại khu vực sảnh giao dịch.
           </p>
 
-          {/* Inline Feedback Form */}
-          <div className="w-full border border-gray-100 rounded-2xl p-5 bg-gray-50/60 mb-4">
-            {feedbackSubmitted ? (
-              <div className="flex flex-col items-center gap-2 py-2 text-green-600">
-                <CheckCircle2 className="w-8 h-8" />
-                <p className="font-semibold text-sm">Cảm ơn bạn đã đánh giá!</p>
-              </div>
-            ) : (
-              <>
-                <div className="flex items-center gap-2 mb-3">
-                  <MessageSquare className="w-4 h-4 text-vietin-blue" />
-                  <p className="text-sm font-bold text-gray-700">Bạn cảm thấy thế nào? (Tùy chọn)</p>
-                </div>
-                {/* Star Rating */}
-                <div className="flex gap-1 justify-center mb-3">
-                  {[1,2,3,4,5].map((s) => (
-                    <button
-                      key={s}
-                      type="button"
-                      onClick={() => setFeedbackRating(s)}
-                      onMouseEnter={() => setFeedbackHover(s)}
-                      onMouseLeave={() => setFeedbackHover(0)}
-                      className="transition-transform hover:scale-110"
-                    >
-                      <Star
-                        className={`w-8 h-8 transition-colors ${
-                          s <= (feedbackHover || feedbackRating)
-                            ? 'fill-yellow-400 text-yellow-400'
-                            : 'text-gray-300'
-                        }`}
-                      />
-                    </button>
-                  ))}
-                </div>
-                {/* Comment */}
-                <textarea
-                  value={feedbackComment}
-                  onChange={(e) => setFeedbackComment(e.target.value)}
-                  placeholder="Nhận xét của bạn (không bắt buộc)..."
-                  rows={2}
-                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-vietin-blue bg-white mb-3"
-                />
-                <button
-                  onClick={handleSubmitFeedback}
-                  disabled={!feedbackRating || feedbackLoading}
-                  className="w-full py-2 px-4 bg-vietin-blue text-white text-sm font-bold rounded-xl hover:bg-vietin-darkBlue transition-all disabled:opacity-40 active:scale-95"
-                >
-                  {feedbackLoading ? 'Đang gửi...' : 'Gửi đánh giá'}
-                </button>
-              </>
-            )}
+          {/* Feedback Reminder */}
+          <div className="w-full border border-blue-50 rounded-2xl p-4 bg-blue-50/30 mb-6 text-center">
+            <p className="text-xs text-gray-500 font-medium leading-relaxed">
+              Quý khách có thể đánh giá chất lượng dịch vụ tại trang <br/>
+              <span className="text-vietin-blue font-bold">"Đánh giá dịch vụ"</span> sau khi đã hoàn tất giao dịch.
+            </p>
+            <div className="mt-2 text-[10px] text-gray-400">
+              Mã tra cứu: <span className="font-mono font-bold select-all">{ticketId}</span>
+            </div>
           </div>
 
           <button onClick={handleReset} className="btn-primary w-full flex items-center justify-center space-x-2 group">

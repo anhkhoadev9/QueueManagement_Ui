@@ -366,7 +366,7 @@ const PublicLayout = () => {
       <header className="sticky top-0 z-50 glassmorphism-dark !bg-vietin-darkBlue/95 border-b-0 shadow-2xl">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center space-x-6">
-            <h1 className="text-3xl font-black tracking-tight text-white drop-shadow-md">
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white drop-shadow-md">
               <Link to="/">K<span className="text-vietin-lightBlue">Smart</span></Link>
             </h1>
             <div className="h-8 w-px bg-white/20"></div>

@@ -255,8 +255,7 @@
 // export default FeedbackPage;
 import { useState, useEffect, useCallback } from 'react';
 import { MessageSquare, Trash2, RefreshCw, Star, Search, ChevronLeft, ChevronRight } from 'lucide-react';
-
-const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+import { apiClient } from '../contexts/AuthContext';
 
 interface FeedbackDto {
   id: string;
@@ -304,27 +303,20 @@ const FeedbackPage = () => {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const PAGE_SIZE = 10;
 
-  const authHeaders = () => {
-    const token = localStorage.getItem('accessToken');
-    const headers: Record<string, string> = { accept: '*/*' };
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-    return headers;
-  };
 
   const fetchFeedbacks = useCallback(async (pageNum = 1) => {
     try {
       setLoading(true);
       setError('');
-      const params = new URLSearchParams({
-        PageNumber: String(pageNum),
-        PageSize: String(PAGE_SIZE),
+      
+      const res = await apiClient.get('/feedbacks', {
+        params: {
+          PageNumber: pageNum,
+          PageSize: PAGE_SIZE
+        }
       });
-       
-      const res = await fetch(`${VITE_API_BASE_URL}/feedbacks?${params}`, {
-        headers: authHeaders(),
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data: PaginatedResult<FeedbackDto> = await res.json();
+      
+      const data: PaginatedResult<FeedbackDto> = res.data;
       const items = data.items ?? data ?? [];
       setFeedbacks(Array.isArray(items) ? items : []);
       setTotalPages(data.totalPages ?? 1);
@@ -344,12 +336,7 @@ const FeedbackPage = () => {
     if (!confirm('Bạn có chắc muốn xóa đánh giá này không?')) return;
     try {
       setDeletingId(id);
-      const headers = { ...authHeaders(), 'Content-Type': 'application/json' };
-      const res = await fetch(`${VITE_API_BASE_URL}/feedbacks/${id}`, {
-        method: 'DELETE',
-        headers,
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      await apiClient.delete(`/feedbacks/${id}`);
       setFeedbacks((prev) => prev.filter((f) => f.id !== id));
       setTotalCount((c) => c - 1);
     } catch (err: any) {

@@ -12,7 +12,7 @@ interface AuthUser {
 
 interface AuthContextType {
   user: AuthUser | null;
-  login: (token: string) => void;
+  login: (accessToken: string, refreshToken: string) => void;
   logout: () => void;
   isAuthenticated: boolean;
   loading: boolean;
@@ -56,7 +56,7 @@ const VITE_API_BASE_URL =
     : `${import.meta.env.VITE_API_BASE_URL}`;
 
 // Tạo axios instance với interceptor để tự động gắn token
-const apiClient = axios.create({
+export const apiClient = axios.create({
   baseURL: VITE_API_BASE_URL,
 });
 
@@ -68,6 +68,51 @@ apiClient.interceptors.request.use((config) => {
   }
   return config;
 });
+
+// Interceptor để xử lý refresh token khi gặp lỗi 401
+apiClient.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+
+    // Nếu lỗi 401 và chưa thử refresh
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      const refreshToken = localStorage.getItem('refreshToken');
+
+      if (refreshToken) {
+        try {
+          // Gọi API refresh token - sử dụng Axios trực tiếp để tránh interceptor vòng lặp
+          const response = await axios.post(`${VITE_API_BASE_URL}/v1/auth/refresh-token`, {
+            refreshToken: refreshToken
+          });
+
+          const { AccessToken, RefreshToken } = response.data;
+
+          // Lưu token mới
+          localStorage.setItem('accessToken', AccessToken);
+          localStorage.setItem('refreshToken', RefreshToken);
+
+          // Cập nhật header cho request hiện tại và các request sau
+          apiClient.defaults.headers.common['Authorization'] = `Bearer ${AccessToken}`;
+          originalRequest.headers['Authorization'] = `Bearer ${AccessToken}`;
+
+          // Thực hiện lại request ban đầu
+          return apiClient(originalRequest);
+        } catch (refreshError) {
+          // Nếu refresh fail (token hết hạn thật sự), logout
+          console.error('Refresh token failed:', refreshError);
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+          window.location.href = '/login';
+          return Promise.reject(refreshError);
+        }
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -142,15 +187,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     initAuth();
   }, []);
 
-  const login = async (token: string) => {
+  const login = async (accessToken: string, refreshToken: string) => {
    
     
-    localStorage.setItem('accessToken', token);
-    const decoded = peekJwt(token);
+    localStorage.setItem('accessToken', accessToken);
+    localStorage.setItem('refreshToken', refreshToken);
+    
+    const decoded = peekJwt(accessToken);
    
     
     // Lấy role ngay lập tức từ token
-    const role = getRoleFromToken(token);
+    const role = getRoleFromToken(accessToken);
      
     
     // Lưu role vào localStorage để dùng sau
@@ -166,7 +213,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     if (userId) {
       // Gọi API lấy thông tin chi tiết user
-      const userInfo = await fetchUserInfo(userId, token);
+      const userInfo = await fetchUserInfo(userId, accessToken);
        
       setUser(userInfo);
       
@@ -190,6 +237,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = () => {
     localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
     localStorage.removeItem('userRole');
     // localStorage.removeItem('userFullName');
     // localStorage.removeItem('userEmail');

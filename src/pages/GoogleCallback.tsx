@@ -37,9 +37,10 @@ const GoogleCallback = () => {
 
                 const token =
                     data.accessToken || data.AccessToken || data.token;
+                const refreshToken = data.refreshToken || data.RefreshToken;
 
                 if (token) {
-                    await login(token);
+                    await login(token, refreshToken);
                 }
 
                 navigate("/kiosk"); // hoặc role-based

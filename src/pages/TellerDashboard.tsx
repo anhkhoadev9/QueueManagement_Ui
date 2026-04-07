@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react';
 import {  CheckCircle, XCircle, User as UserIcon, Loader2, RefreshCw } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth, apiClient } from '../contexts/AuthContext';
 
-//const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 interface Ticket {
   Id: string;
   TicketNumber: string;
@@ -25,36 +23,22 @@ const TellerDashboard = () => {
 
 const fetchCurrentTicket = async () => {
   try {
-    const token = localStorage.getItem('accessToken');
+    const res = await apiClient.get('/tickets/current');
 
-    const res = await fetch(`${VITE_API_BASE_URL}/tickets/current`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-
-    if (!res.ok) {
-      setCurrentTicket(null);
-      return;
-    }
-
-    const text = await res.text();
-    const data = text ? JSON.parse(text) : null;
-
+    const data = res.data;
     setCurrentTicket(data?.Id ? data : null);
 
-  } catch (err) {
-    console.error("Failed to fetch current ticket", err);
+  } catch (err: any) {
+    if (err.response?.status !== 404) {
+      console.error("Failed to fetch current ticket", err);
+    }
+    setCurrentTicket(null);
   }
 };
   const fetchWaitingQueue = async () => {
     try {
-      const token = localStorage.getItem('accessToken');
-      const res = await fetch(`${VITE_API_BASE_URL}/tickets/waiting`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setWaitingTickets(data);
-      }
+      const res = await apiClient.get('/tickets/waiting');
+      setWaitingTickets(res.data);
     } catch (err) {
       console.error("Failed to fetch waiting queue", err);
     }
@@ -78,36 +62,11 @@ const handleCallNext = async () => {
   try {
     setActionLoading(true);
 
-    const token = localStorage.getItem("accessToken");
-
-    const res = await fetch(`${VITE_API_BASE_URL}/tickets/call-next`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ staffId: user.userId }),
+    const res = await apiClient.post('/tickets/call-next', { 
+      staffId: user.userId 
     });
 
-    // ❌ nếu lỗi
-    if (!res.ok) {
-      const text = await res.text();
-      let err;
-
-      try {
-        err = text ? JSON.parse(text) : null;
-      } catch {
-        err = null;
-      }
-
-      alert(err?.message || "Không có khách đợi hoặc lỗi hệ thống.");
-      return;
-    }
-
-    // ✅ nếu thành công
-    const text = await res.text();
-    const data = text ? JSON.parse(text) : null;
-
+    const data = res.data;
     console.log("Next ticket called:", data);
 
     setCurrentTicket(data);
@@ -123,21 +82,13 @@ const handleCallNext = async () => {
     if (!currentTicket || !user) return;
     try {
       setActionLoading(true);
-      const token = localStorage.getItem('accessToken');
-      const res = await fetch(`${VITE_API_BASE_URL}/tickets`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          ticketId: currentTicket.Id,
-          newStatus: newStatus,
-          staffId: user.userId
-        })
+      const res = await apiClient.patch('/tickets', {
+        ticketId: currentTicket.Id,
+        newStatus: newStatus,
+        staffId: user.userId
       });
 
-      if (res.ok) {
+      if (res.status === 200 || res.status === 204) {
         setCurrentTicket(null);
         fetchWaitingQueue();
       }

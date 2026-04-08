@@ -266,7 +266,8 @@ const LoginPage = () => {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => null);
-        throw new Error(errorData?.message || 'Đăng nhập thất bại. Sai tài khoản hoặc mật khẩu.');
+        // Backend trả về dạng { "Error": "...", "Details": "..." }
+        throw new Error(errorData?.Details || errorData?.message || errorData?.error || 'Đăng nhập thất bại. Sai tài khoản hoặc mật khẩu.');
       }
 
       const data = await response.json();
@@ -292,7 +293,18 @@ const LoginPage = () => {
       }, 100);
       
     } catch (err: any) {
-      setError(err.message || 'Lỗi kết nối máy chủ.');
+      let errorMessage = err.message || 'Lỗi kết nối máy chủ.';
+      
+      // Chuẩn hóa thông báo tiếng Việt
+      if (errorMessage.includes('Account is locked')) {
+        errorMessage = 'Tài khoản đã bị khóa do nhập sai mật khẩu nhiều lần. Vui lòng thử lại sau 2 phút.';
+      } else if (errorMessage.includes('Invalid login info') || errorMessage.includes('Wrong password') || errorMessage.includes('Invalid credentials')) {
+        errorMessage = 'Tên tài khoản hoặc mật khẩu không chính xác.';
+      } else if (errorMessage.includes('User not found')) {
+        errorMessage = 'Tài khoản không tồn tại trong hệ thống.';
+      }
+
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }

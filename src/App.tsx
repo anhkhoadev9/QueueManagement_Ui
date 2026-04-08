@@ -3,7 +3,6 @@ import { AuthProvider } from './contexts/AuthContext';
 import AdminLayout from './layouts/AdminLayout';
 import PublicLayout from './layouts/PublicLayout';
 import KioskPage from './pages/KioskPage';
- 
 import TellerDashboard from './pages/TellerDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import LoginPage from './pages/LoginPage';
@@ -13,32 +12,74 @@ import FeedbackPage from './pages/FeedbackPage';
 import GoogleCallback from './pages/GoogleCallback';
 import NotFoundPage from './pages/NotFoundPage';
 import SubmitFeedbackPage from './pages/SubmitFeedbackPage';
+import TicketTrackPage from './pages/TicketTrackPage';
+import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          {/* Public Routes without Sidebar */}
+          {/* Fully Public Routes (no auth needed) */}
           <Route element={<PublicLayout />}>
-            <Route path="/kiosk" element={<KioskPage />} />
-            <Route path="/queue" element={<QueuePage />} />
-           
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/google-callback" element={<GoogleCallback />} />
-            <Route path="/submit-feedback" element={<SubmitFeedbackPage />} />
+            <Route path="/queue" element={<QueuePage />} />
+            <Route path="/track/:id" element={<TicketTrackPage />} />
+            <Route path="/404" element={<NotFoundPage />} />
             <Route path="/" element={<Navigate to="/login" replace />} />
           </Route>
 
-          {/* Admin/Teller Routes with Sidebar */}
-          <Route element={<AdminLayout />}>
-            <Route path="/teller" element={<TellerDashboard />} />
-            <Route path="/admin" element={<AdminDashboard />} />
-            <Route path="/feedbacks" element={<FeedbackPage />} />
+          {/* Authenticated User Routes */}
+          <Route element={<PublicLayout />}>
+            <Route
+              path="/kiosk"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'user']}>
+                  <KioskPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/submit-feedback"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'user']}>
+                  <SubmitFeedbackPage />
+                </ProtectedRoute>
+              }
+            />
           </Route>
 
-          {/* 404 Route */}
+          {/* Admin / Staff Routes with Sidebar */}
+          <Route element={<AdminLayout />}>
+            <Route
+              path="/teller"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'staff']}>
+                  <TellerDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/feedbacks"
+              element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <FeedbackPage />
+                </ProtectedRoute>
+              }
+            />
+          </Route>
+
+          {/* 404 Catch-all */}
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </BrowserRouter>
@@ -47,5 +88,3 @@ function App() {
 }
 
 export default App;
-
-

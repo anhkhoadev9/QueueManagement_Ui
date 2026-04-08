@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import {  CheckCircle, XCircle, User as UserIcon, Loader2, RefreshCw } from 'lucide-react';
+import { CheckCircle, XCircle, User as UserIcon, Loader2, RefreshCw } from 'lucide-react';
 import { useAuth, apiClient } from '../contexts/AuthContext';
 
 interface Ticket {
@@ -8,10 +8,27 @@ interface Ticket {
   CustomerName: string;
   PhoneNumber: string;
   ServiceName: string;
+  ServiceId: string;
   Status: number;
   IssuedAt: string;
   CalledAt?: string;
 }
+
+// Hàm chuẩn hóa dữ liệu từ API (xử lý cả PascalCase và camelCase)
+const mapTicketData = (data: any): Ticket | null => {
+  if (!data || (!data.Id && !data.id)) return null;
+  return {
+    Id: data.Id || data.id,
+    TicketNumber: data.TicketNumber || data.ticketNumber,
+    CustomerName: data.CustomerName || data.customerName,
+    PhoneNumber: data.PhoneNumber || data.phoneNumber,
+    ServiceName: data.ServiceName || data.serviceName,
+    ServiceId: data.ServiceId || data.serviceId,
+    Status: data.Status || data.status,
+    IssuedAt: data.IssuedAt || data.issuedAt,
+    CalledAt: data.CalledAt || data.calledAt,
+  };
+};
 
 const TellerDashboard = () => {
   const { user } = useAuth();
@@ -20,25 +37,24 @@ const TellerDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
 
-
-const fetchCurrentTicket = async () => {
-  try {
-    const res = await apiClient.get('/tickets/current');
-
-    const data = res.data;
-    setCurrentTicket(data?.Id ? data : null);
-
-  } catch (err: any) {
-    if (err.response?.status !== 404) {
-      console.error("Failed to fetch current ticket", err);
+  const fetchCurrentTicket = async () => {
+    try {
+      const res = await apiClient.get('/tickets/current');
+      const mapped = mapTicketData(res.data);
+      setCurrentTicket(mapped);
+    } catch (err: any) {
+      if (err.response?.status !== 404) {
+        console.error("Failed to fetch current ticket", err);
+      }
+      setCurrentTicket(null);
     }
-    setCurrentTicket(null);
-  }
-};
+  };
   const fetchWaitingQueue = async () => {
     try {
       const res = await apiClient.get('/tickets/waiting');
-      setWaitingTickets(res.data);
+      const data = res.data;
+      const list = Array.isArray(data) ? data.map(mapTicketData).filter(Boolean) as Ticket[] : [];
+      setWaitingTickets(list);
     } catch (err) {
       console.error("Failed to fetch waiting queue", err);
     }
@@ -56,28 +72,29 @@ const fetchCurrentTicket = async () => {
     return () => clearInterval(interval);
   }, []);
 
-const handleCallNext = async () => {
-  if (!user) return;
+  const handleCallNext = async () => {
+    if (!user) return;
 
-  try {
-    setActionLoading(true);
+    try {
+      setActionLoading(true);
+      const res = await apiClient.post('/tickets/call-next', {
+        staffId: user.userId
+      });
 
-    const res = await apiClient.post('/tickets/call-next', { 
-      staffId: user.userId 
-    });
+      const mapped = mapTicketData(res.data);
+      console.log("Next ticket called:", mapped);
 
-    const data = res.data;
-    console.log("Next ticket called:", data);
+      setCurrentTicket(mapped);
+      console.log("ST:", user.userId);
+    console.log("dATA:", res.data);
+      fetchWaitingQueue();
 
-    setCurrentTicket(data);
-    fetchWaitingQueue();
-
-  } catch (err) {
-    console.error("Call next failed", err);
-  } finally {
-    setActionLoading(false);
-  }
-};
+    } catch (err) {
+      console.error("Call next failed", err);
+    } finally {
+      setActionLoading(false);
+    }
+  };
   const updateStatus = async (newStatus: number) => {
     if (!currentTicket || !user) return;
     try {
@@ -98,7 +115,6 @@ const handleCallNext = async () => {
       setActionLoading(false);
     }
   };
-
   const serviceCounts = waitingTickets.reduce((acc: any, t) => {
     acc[t.ServiceName] = (acc[t.ServiceName] || 0) + 1;
     return acc;
@@ -112,6 +128,12 @@ const handleCallNext = async () => {
     );
   }
 
+  const formatTime = (timeStr?: string) => {
+    if (!timeStr) return "N/A";
+    const date = new Date(timeStr);
+    return isNaN(date.getTime()) ? "N/A" : date.toLocaleTimeString('vi-VN');
+  };
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -121,8 +143,8 @@ const handleCallNext = async () => {
           <div className="flex justify-between items-center border-b pb-4 mb-4">
             <h3 className="text-lg font-semibold text-gray-800">Phiên phục vụ</h3>
             {currentTicket && (
-              <span className="text-xs text-gray-400 font-medium">
-                Bắt đầu lúc: {new Date(currentTicket.CalledAt || "").toLocaleTimeString()}
+              <span className="text-xs text-gray-400 font-medium italic">
+                Bắt đầu lúc: {formatTime(currentTicket.CalledAt)}
               </span>
             )}
           </div>
@@ -152,12 +174,12 @@ const handleCallNext = async () => {
           <div className="grid grid-cols-2 gap-4 mt-8">
             <button
               disabled={!currentTicket || actionLoading}
-              onClick={() => updateStatus(4)} 
+              onClick={() => updateStatus(4)}
               className="flex items-center justify-center gap-2 py-4 bg-gray-50 hover:bg-gray-100 text-gray-600 rounded-xl font-bold transition-all active:scale-95 disabled:opacity-50"
             >
               <XCircle className="w-6 h-6" /> Bỏ qua
             </button>
-            
+
             <button
               disabled={!currentTicket || actionLoading}
               onClick={() => updateStatus(3)} // Completed
@@ -200,10 +222,12 @@ const handleCallNext = async () => {
             </button>
 
             <div className="mt-2">
-              <p className="text-sm font-bold text-gray-600 mb-4 flex items-center gap-2">
+              <div className="flex items-center gap-2 mb-4">
                 <div className="w-1 h-4 bg-vietin-blue rounded-full"></div>
-                Danh sách chờ theo dịch vụ:
-              </p>
+                <span className="text-sm font-bold text-gray-600">
+                  Danh sách chờ theo dịch vụ:
+                </span>
+              </div>
               <div className="space-y-3">
                 {Object.keys(serviceCounts).length > 0 ? (
                   Object.entries(serviceCounts).map(([svc, count]: any) => (

@@ -165,7 +165,7 @@ const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
           <div className="flex items-center gap-3">
             <div className="hidden sm:flex flex-col items-end mr-2">
                 <span className="text-xs font-bold text-gray-400 uppercase tracking-tighter">Hệ thống KSmart</span>
-                <span className="text-[10px] text-vietin-blue font-medium italic">VietinBank Style</span>
+                <span className="text-[10px] text-vietin-blue font-medium italic">Hotline: 0934 378 953</span>
             </div>
           </div>
         </header>

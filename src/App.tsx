@@ -25,8 +25,7 @@ function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/google-callback" element={<GoogleCallback />} />
-            <Route path="/queue" element={<QueuePage />} />
-            <Route path="/track/:id" element={<TicketTrackPage />} />
+            <Route path="/queue" element={<QueuePage />} />        
             <Route path="/404" element={<NotFoundPage />} />
             <Route path="/" element={<Navigate to="/login" replace />} />
           </Route>

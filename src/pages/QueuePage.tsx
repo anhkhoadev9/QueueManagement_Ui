@@ -103,7 +103,9 @@ const QueuePage = () => {
         const connection = new HubConnectionBuilder()
           .withUrl(hubUrl, { 
             withCredentials: true, // MUST be true if Backend uses AllowCredentials
-            transport: HttpTransportType.WebSockets | HttpTransportType.LongPolling
+             timeout: 30000,
+            transport: HttpTransportType.WebSockets | HttpTransportType.LongPolling,
+            skipNegotiation:false
           })
           .withAutomaticReconnect([0, 2000, 5000, 10000])
           .configureLogging(LogLevel.Information)

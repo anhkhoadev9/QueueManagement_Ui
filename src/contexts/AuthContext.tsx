@@ -182,11 +182,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // };
  const logout = async () => {
   try {
-    // Lấy refreshToken từ cookie
+    // ✅ Sửa đúng tên cookie (có dấu gạch dưới)
     const refreshToken = document.cookie
       .split('; ')
-      .find(row => row.startsWith('refreshToken='))
+      .find(row => row.startsWith('refresh_token='))  // ← Sửa thành refresh_token=
       ?.split('=')[1];
+    
+    console.log("Logout refreshToken:", refreshToken);
     
     // Gọi API logout với refreshToken trong body
     await apiClient.post('/auth/logout', { refreshToken });

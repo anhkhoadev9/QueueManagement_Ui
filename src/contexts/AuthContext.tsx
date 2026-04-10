@@ -180,9 +180,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   //   // localStorage.removeItem('userPhone');
   //   setUser(null);
   // };
-  const logout = async () => {
+ const logout = async () => {
   try {
-    await apiClient.post('/auth/logout');
+    // Lấy refreshToken từ cookie
+    const refreshToken = document.cookie
+      .split('; ')
+      .find(row => row.startsWith('refreshToken='))
+      ?.split('=')[1];
+    
+    // Gọi API logout với refreshToken trong body
+    await apiClient.post('/auth/logout', { refreshToken });
   } catch (error) {
     console.error('Logout error:', error);
   } finally {

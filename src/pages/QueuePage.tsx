@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Users, RefreshCw, ArrowLeft, Clock, CheckCircle2, PhoneCall, Star, X, PartyPopper, ThumbsUp, Wifi, WifiOff } from 'lucide-react';
-import { apiClient,useAuth } from '../contexts/AuthContext';
+import { apiClient, useAuth } from '../contexts/AuthContext';
 
 interface TicketDto {
   Id: string;
@@ -55,7 +55,7 @@ const QueuePage = () => {
   const navigate = useNavigate();
   const [tickets, setTickets] = useState<TicketDto[]>([]);
   const [loading, setLoading] = useState(true);
-  const [ ,setError] = useState('');
+  const [, setError] = useState('');
   const [, setLastUpdated] = useState<Date | null>(null);
   const [notification, setNotification] = useState<CompletionNotification | null>(null);
   const [showRatingForm, setShowRatingForm] = useState(false);
@@ -63,8 +63,8 @@ const QueuePage = () => {
   const [ratingComment, setRatingComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hoverRating, setHoverRating] = useState(0);
-  const {user}=useAuth();
-  
+  const { user } = useAuth();
+
   // Real-time status
   const [hubStatus, setHubStatus] = useState<'connecting' | 'connected' | 'error' | 'reconnecting'>('connecting');
   const connectionRef = useRef<any>(null);
@@ -101,11 +101,11 @@ const QueuePage = () => {
         setHubStatus('connecting');
 
         const connection = new HubConnectionBuilder()
-          .withUrl(hubUrl, { 
+          .withUrl(hubUrl, {
             withCredentials: true, // MUST be true if Backend uses AllowCredentials
-             timeout: 30000,
+            timeout: 30000,
             transport: HttpTransportType.WebSockets | HttpTransportType.LongPolling,
-            skipNegotiation:false
+            skipNegotiation: false
           })
           .withAutomaticReconnect([0, 2000, 5000, 10000])
           .configureLogging(LogLevel.Information)
@@ -115,7 +115,7 @@ const QueuePage = () => {
           console.log('[SignalR] Event ReceiveTicketCompleted:', ticketData);
 
           const ticketId = ticketData.Id || ticketData.id;
-          
+
           // Avoid duplicate processing
           if (processedTicketsRef.current.has(ticketId)) return;
           processedTicketsRef.current.add(ticketId);
@@ -198,7 +198,7 @@ const QueuePage = () => {
   useEffect(() => {
     fetchWaiting();
     // Use a slow polling only as a very backup for the list itself
-    const interval = setInterval(fetchWaiting, 20000); 
+    const interval = setInterval(fetchWaiting, 20000);
     return () => clearInterval(interval);
   }, [fetchWaiting]);
 
@@ -211,7 +211,7 @@ const QueuePage = () => {
 
   return (
     <div className="flex-1 flex flex-col min-h-[70vh] w-full animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
-      
+
       {/* ── Status Indicator ── */}
       <div className="fixed bottom-4 right-4 z-[60] flex items-center gap-2 px-3 py-1.5 rounded-full bg-white shadow-lg border border-gray-100 text-[10px] font-bold uppercase tracking-wider">
         {hubStatus === 'connected' && <><Wifi className="w-3 h-3 text-green-500" /> <span className="text-green-600">Real-time Ready</span></>}
@@ -223,12 +223,14 @@ const QueuePage = () => {
       {notification && !showRatingForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-300 px-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-in zoom-in duration-300">
-            <div className="bg-gradient-to-r from-green-500 to-emerald-600 p-6 text-white text-center">
+            {/* Header - Đổi từ xanh lá sang xanh VietinBank */}
+            <div className="bg-vietin-blue p-6 text-white text-center">
               <div className="inline-flex items-center justify-center w-16 h-16 bg-white/20 rounded-full mb-4">
                 <PartyPopper className="w-8 h-8" />
               </div>
               <h3 className="text-2xl font-bold">Dịch vụ hoàn thành!</h3>
             </div>
+
             <div className="p-6">
               <div className="mb-6 space-y-3">
                 <div className="flex justify-between items-center pb-2 border-b border-gray-100">
@@ -240,9 +242,22 @@ const QueuePage = () => {
                   <span className="font-semibold text-gray-800">{notification.serviceName}</span>
                 </div>
               </div>
+
               <div className="flex gap-3">
-                <button onClick={() => setNotification(null)} className="flex-1 px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-semibold transition-colors">Để sau</button>
-                <button onClick={() => setShowRatingForm(true)} className="flex-1 px-4 py-3 bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white rounded-xl font-semibold transition-all shadow-lg flex items-center justify-center gap-2"><ThumbsUp className="w-5 h-5" />Đánh giá ngay</button>
+                <button
+                  onClick={() => setNotification(null)}
+                  className="flex-1 px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-semibold transition-colors"
+                >
+                  Để sau
+                </button>
+                {/* Button đánh giá - Đổi từ vàng cam sang xanh VietinBank */}
+                <button
+                  onClick={() => setShowRatingForm(true)}
+                  className="flex-1 px-4 py-3 bg-vietin-blue hover:bg-vietin-darkBlue text-white rounded-xl font-semibold transition-all shadow-lg flex items-center justify-center gap-2"
+                >
+                  <ThumbsUp className="w-5 h-5" />
+                  Đánh giá ngay
+                </button>
               </div>
             </div>
           </div>
@@ -252,25 +267,62 @@ const QueuePage = () => {
       {showRatingForm && notification && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-300 px-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-in slide-in-from-bottom-4 duration-300">
-            <div className="bg-gradient-to-r from-yellow-400 to-orange-500 p-5 text-white flex justify-between items-center">
+            {/* Header - Dùng màu vietin-blue */}
+            <div className="bg-vietin-blue p-5 text-white flex justify-between items-center">
               <h3 className="text-xl font-bold">Đánh giá dịch vụ</h3>
-              <button onClick={() => { setShowRatingForm(false); setNotification(null); }} className="text-white/80 hover:text-white transition-colors"><X className="w-5 h-5" /></button>
+              <button
+                onClick={() => { setShowRatingForm(false); setNotification(null); }}
+                className="text-white/80 hover:text-white transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
+
             <div className="p-6">
+              {/* Thông tin vé - đổi màu highlight sang vietin-blue */}
               <div className="bg-gray-50 rounded-xl p-4 mb-6 flex justify-between text-sm">
-                <span className="text-gray-500 font-medium">Số vé: <strong className="text-vietin-blue">{notification.ticketNumber}</strong></span>
-                <span className="text-gray-500 font-medium text-right">Dịch vụ: <strong>{notification.serviceName}</strong></span>
+                <span className="text-gray-500 font-medium">
+                  Số vé: <strong className="text-vietin-blue">{notification.ticketNumber}</strong>
+                </span>
+                <span className="text-gray-500 font-medium text-right">
+                  Dịch vụ: <strong className="text-vietin-blue">{notification.serviceName}</strong>
+                </span>
               </div>
-              <p className="text-center text-gray-700 font-semibold mb-6">Bạn hài lòng với dịch vụ này chứ?</p>
+
+              <p className="text-center text-gray-700 font-semibold mb-6">
+                Bạn hài lòng với dịch vụ này chứ?
+              </p>
+
+              {/* Star rating - giữ màu vàng để nổi bật */}
               <div className="flex justify-center gap-2 mb-8">
                 {[1, 2, 3, 4, 5].map((star) => (
-                  <button key={star} onClick={() => setRating(star)} onMouseEnter={() => setHoverRating(star)} onMouseLeave={() => setHoverRating(0)} className="transition-transform hover:scale-110 focus:outline-none">
+                  <button
+                    key={star}
+                    onClick={() => setRating(star)}
+                    onMouseEnter={() => setHoverRating(star)}
+                    onMouseLeave={() => setHoverRating(0)}
+                    className="transition-transform hover:scale-110 focus:outline-none"
+                  >
                     <Star className={`w-10 h-10 ${(hoverRating || rating) >= star ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'} transition-colors`} />
                   </button>
                 ))}
               </div>
-              <textarea value={ratingComment} onChange={(e) => setRatingComment(e.target.value)} rows={3} className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-yellow-400 focus:border-transparent resize-none mb-6 text-sm" placeholder="Chia sẻ thêm ý kiến của bạn..." />
-              <button onClick={handleSubmitRating} disabled={isSubmitting || rating === 0} className="w-full py-4 bg-gradient-to-r from-yellow-400 to-orange-500 text-white rounded-xl font-bold shadow-lg disabled:opacity-50 transition-all hover:shadow-xl">
+
+              {/* Textarea - focus ring màu vietin-blue */}
+              <textarea
+                value={ratingComment}
+                onChange={(e) => setRatingComment(e.target.value)}
+                rows={3}
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-vietin-blue focus:border-transparent resize-none mb-6 text-sm"
+                placeholder="Chia sẻ thêm ý kiến của bạn..."
+              />
+
+              {/* Button submit - dùng đúng class của bạn */}
+              <button
+                onClick={handleSubmitRating}
+                disabled={isSubmitting || rating === 0}
+                className="flex items-center justify-center gap-2 px-4 py-4 rounded-lg bg-vietin-blue text-white text-sm font-semibold hover:bg-vietin-darkBlue transition-colors disabled:opacity-60 w-full"
+              >
                 {isSubmitting ? 'Đang gửi...' : 'Gửi đánh giá'}
               </button>
             </div>

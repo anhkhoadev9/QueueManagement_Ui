@@ -120,6 +120,7 @@ const FeedbackPage = () => {
     } catch (err: any) {
       console.error('Delete error:', err);
       alert('Xóa thất bại: ' + (err.response?.data?.message || err.message || ''));
+      console.error("id to delete:", id);
     } finally {
       setDeletingId(null);
     }

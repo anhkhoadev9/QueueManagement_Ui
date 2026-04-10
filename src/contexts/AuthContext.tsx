@@ -12,8 +12,8 @@ interface AuthUser {
 
 interface AuthContextType {
   user: AuthUser | null;
-  login: (accessToken: string, refreshToken: string) => void;
-  logout: () => void;
+   login: (loginInfo: string, password: string) => Promise<void>
+  logout: () => Promise<void>;
   isAuthenticated: boolean;
   loading: boolean;
   userRole: string | null;
@@ -21,33 +21,33 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Simple JWT decoding (base64)
-const peekJwt = (token: string): any => {
-  try {
-    const payload = token.split('.')[1];
-    const decoded = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
-    return JSON.parse(decoded);
-  } catch (e) {
-    return null;
-  }
-};
+// // Simple JWT decoding (base64)
+// const peekJwt = (token: string): any => {
+//   try {
+//     const payload = token.split('.')[1];
+//     const decoded = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
+//     return JSON.parse(decoded);
+//   } catch (e) {
+//     return null;
+//   }
+// };
 
-// Hàm lấy role từ token
-const getRoleFromToken = (token: string): string | null => {
-  const decoded = peekJwt(token);
+// // Hàm lấy role từ token
+// const getRoleFromToken = (token: string): string | null => {
+//   const decoded = peekJwt(token);
   
   
-  if (decoded) {
-    const role = decoded['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] ||
-                 decoded['role'] ||
-                 decoded['Role'] ||
-                 null;
+//   if (decoded) {
+//     const role = decoded['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] ||
+//                  decoded['role'] ||
+//                  decoded['Role'] ||
+//                  null;
     
     
-    return role;
-  }
-  return null;
-};
+//     return role;
+//   }
+//   return null;
+// };
 
 // API base URL
 const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -55,195 +55,144 @@ const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 // Tạo axios instance với interceptor để tự động gắn token
 export const apiClient = axios.create({
   baseURL: VITE_API_BASE_URL,
+   withCredentials: true,
 });
 
 
-// Interceptor để tự động thêm token vào header
-apiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem('accessToken');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+// // Interceptor để tự động thêm token vào header
+// apiClient.interceptors.request.use((config) => {
+//   const token = localStorage.getItem('accessToken');
+//   if (token) {
+//     config.headers.Authorization = `Bearer ${token}`;
+//   }
+//   return config;
+// });
 
-// Interceptor để xử lý refresh token khi gặp lỗi 401
-apiClient.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
+// // Interceptor để xử lý refresh token khi gặp lỗi 401
+// apiClient.interceptors.response.use(
+//   (response) => response,
+//   async (error) => {
+//     const originalRequest = error.config;
 
-    // Nếu lỗi 401 và chưa thử refresh
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-      const refreshToken = localStorage.getItem('refreshToken');
+//     // Nếu lỗi 401 và chưa thử refresh
+//     if (error.response?.status === 401 && !originalRequest._retry) {
+//       originalRequest._retry = true;
+//       const refreshToken = localStorage.getItem('refreshToken');
 
-      if (refreshToken) {
-        try {
-          // Gọi API refresh token - sử dụng Axios trực tiếp để tránh interceptor vòng lặp
-          const response = await axios.post(`${VITE_API_BASE_URL}/v1/auth/refresh-token`, {
-            refreshToken: refreshToken
-          });
+//       if (refreshToken) {
+//         try {
+//           // Gọi API refresh token - sử dụng Axios trực tiếp để tránh interceptor vòng lặp
+//           const response = await axios.post(`${VITE_API_BASE_URL}/v1/auth/refresh-token`, {
+//             refreshToken: refreshToken
+//           });
 
-          const { AccessToken, RefreshToken } = response.data;
+//           const { AccessToken, RefreshToken } = response.data;
 
-          // Lưu token mới
-          localStorage.setItem('accessToken', AccessToken);
-          localStorage.setItem('refreshToken', RefreshToken);
+//           // Lưu token mới
+//           localStorage.setItem('accessToken', AccessToken);
+//           localStorage.setItem('refreshToken', RefreshToken);
 
-          // Cập nhật header cho request hiện tại và các request sau
-          apiClient.defaults.headers.common['Authorization'] = `Bearer ${AccessToken}`;
-          originalRequest.headers['Authorization'] = `Bearer ${AccessToken}`;
+//           // Cập nhật header cho request hiện tại và các request sau
+//           apiClient.defaults.headers.common['Authorization'] = `Bearer ${AccessToken}`;
+//           originalRequest.headers['Authorization'] = `Bearer ${AccessToken}`;
 
-          // Thực hiện lại request ban đầu
-          return apiClient(originalRequest);
-        } catch (refreshError) {
-          // Nếu refresh fail (token hết hạn thật sự), logout
-          console.error('Refresh token failed:', refreshError);
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('refreshToken');
-          window.location.href = '/login';
-          return Promise.reject(refreshError);
-        }
-      }
-    }
+//           // Thực hiện lại request ban đầu
+//           return apiClient(originalRequest);
+//         } catch (refreshError) {
+//           // Nếu refresh fail (token hết hạn thật sự), logout
+//           console.error('Refresh token failed:', refreshError);
+//           localStorage.removeItem('accessToken');
+//           localStorage.removeItem('refreshToken');
+//           window.location.href = '/login';
+//           return Promise.reject(refreshError);
+//         }
+//       }
+//     }
 
-    return Promise.reject(error);
-  }
-);
+//     return Promise.reject(error);
+//   }
+// );
+
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Hàm lấy thông tin user từ API
-  const fetchUserInfo = async (userId: string, token: string): Promise<AuthUser | null> => {
-    try {
-      const response = await apiClient.get(`/users/${userId}`);
-      const userData = response.data;
-      
-      // Lấy role từ token
-      const role = getRoleFromToken(token);
-       
-      
-      // Map dữ liệu từ API response (UserDto)
-      return {
-        userId: userData.Id || userData.id || userId, // Lấy Id (viết hoa I)
-        email: userData.Email || userData.email || '', // Lấy Email (viết hoa E)
-        fullName: userData.FullName || userData.fullName || '', // Lấy FullName (viết hoa F)
-        phoneNumber: userData.PhoneNumber || userData.phoneNumber || '', // Lấy PhoneNumber (viết hoa P)
-        role: role || userData.Role || userData.role || '',
-      };
-    } catch (error) {
-      console.error('Failed to fetch user info:', error);
-      // Nếu API fail, vẫn dùng thông tin từ JWT
-      const decoded = peekJwt(token);
-      const role = getRoleFromToken(token);
-      
-      
-      return {
-        userId: userId,
-        email: decoded?.email || decoded?.['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'] || '',
-        fullName: decoded?.name || decoded?.['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'] || '',
-        role: role || '',
-      };
-    }
-  };
-
-  useEffect(() => {
-    const initAuth = async () => {
-      const token = localStorage.getItem('accessToken');
-      if (token) {
-        const decoded = peekJwt(token);
-        if (decoded) {
-          // Lấy userId từ claim 'sub' trong token
-          const userId = decoded.sub || 
-                        decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'] || 
-                        decoded.nameid;
-          
-         
-          
-          if (userId) {
-            const userInfo = await fetchUserInfo(userId, token);
-            
-            setUser(userInfo);
-          } else {
-            console.warn('No userId found in token');
-            const role = getRoleFromToken(token);
-            setUser({
-              userId: '',
-              email: decoded.email || decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'] || '',
-              fullName: decoded.name || decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'] || '',
-              role: role || '',
-            });
-          }
-        }
-      }
-      setLoading(false);
+  const fetchUserInfo = async (): Promise<AuthUser | null> => {
+  try {
+    // Không cần token, Cookie tự nhảy vào Request
+    const response = await apiClient.get(`/auth/me`);
+    const userData = response.data;
+    console.log("Fetched user info:", userData);
+    
+ 
+    return {
+      userId: userData.Id,
+      email: userData.Email,
+      fullName: userData.FullName,
+      role: userData.Role,
     };
+  } catch (error) {
+    return null;
+  }
+};
 
-    initAuth();
-  }, []);
-
-  const login = async (accessToken: string, refreshToken: string) => {
-   
-    
-    localStorage.setItem('accessToken', accessToken);
-    localStorage.setItem('refreshToken', refreshToken);
-    
-    const decoded = peekJwt(accessToken);
-   
-    
-    // Lấy role ngay lập tức từ token
-    const role = getRoleFromToken(accessToken);
-     
-    
-    // Lưu role vào localStorage để dùng sau
-    if (role) {
-      localStorage.setItem('userRole', role);
-    }
-    
-    // Lấy userId từ token
-    const userId = decoded?.sub;
-                  
-    
-     
-    
-    if (userId) {
-      // Gọi API lấy thông tin chi tiết user
-      const userInfo = await fetchUserInfo(userId, accessToken);
-       
-      setUser(userInfo);
-      
-      // Lưu thêm thông tin vào localStorage nếu cần
-      if (userInfo) {
-        localStorage.setItem('userFullName', userInfo.fullName || '');
-        localStorage.setItem('userEmail', userInfo.email || '');
-        localStorage.setItem('userPhone', userInfo.phoneNumber || '');
-         
-      }
+ useEffect(() => {
+  const initAuth = async () => {
+    const userInfo = await fetchUserInfo();
+    if (userInfo) {
+       setUser(userInfo); // Valid! Load App...
+          console.log("Fetched user infobew:", user);
     } else {
-       
-      setUser({
-        userId: '',
-        email: decoded?.email || decoded?.['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'] || '',
-        fullName: decoded?.name || decoded?.['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'] || '',
-        role: role || '',
-      });
+       setUser(null);     // Cookie thiu, vứt ra phòng Đăng Nhập
     }
+    setLoading(false);
   };
+  initAuth();
+}, []);
 
-  const logout = () => {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
-    localStorage.removeItem('userRole');
-    // localStorage.removeItem('userFullName');
-    // localStorage.removeItem('userEmail');
-    // localStorage.removeItem('userPhone');
+  const login = async (loginInfo: string, password: string) => {
+  try {
+      await apiClient.post('/auth/login', {
+      LoginInfo: loginInfo,
+      Password: password
+    });
+    // Cookie đã được backend set, không cần làm gì thêm
+    // Gọi fetchUserInfo để lấy thông tin user
+    const userInfo = await fetchUserInfo();
+    if (userInfo) {
+      setUser(userInfo);
+      console.log("Current user info:", userInfo);
+    }
+  } catch (error) {
+    console.error('Login failed:', error);
+    throw error;
+  }
+};
+
+  // const logout = () => {
+  //   localStorage.removeItem('accessToken');
+  //   localStorage.removeItem('refreshToken');
+  //   localStorage.removeItem('userRole');
+  //   // localStorage.removeItem('userFullName');
+  //   // localStorage.removeItem('userEmail');
+  //   // localStorage.removeItem('userPhone');
+  //   setUser(null);
+  // };
+  const logout = async () => {
+  try {
+    await apiClient.post('/auth/logout');
+  } catch (error) {
+    console.error('Logout error:', error);
+  } finally {
     setUser(null);
-  };
+  }
+};
 
-  const userRole = user?.role || localStorage.getItem('userRole') || null;
+  const userRole = user?.role || null;
+console.log("Current user role:", userRole);
+
 
   if (loading) {
     return (

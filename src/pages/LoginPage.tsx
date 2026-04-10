@@ -2,10 +2,10 @@
 // export default LoginPage;
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth, apiClient } from '../contexts/AuthContext';
 
 //const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 const VITE_GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 const VITE_GOOGLE_REDIRECT_URI = import.meta.env.VITE_GOOGLE_REDIRECT_URI;
 // Các component nhỏ để tái sử dụng
@@ -232,19 +232,66 @@ const LoginPage = () => {
   const [successMessage, setSuccessMessage] = useState('');
 
   // Check if user is already logged in
-  useEffect(() => {
-    const token = localStorage.getItem('accessToken');
-    if (token && userRole) {
-      // Redirect based on role
+//   useEffect(() => {
+//   if (userRole) {
+//     // Redirect based on role
+//     if (userRole === 'Admin') {
+//       navigate('/teller');
+//     } else {
+//       navigate('/kiosk');
+//     }
+//   }
+// }, [navigate, userRole]);
+
+//   // Handle login with role-based redirection
+//   const handleLogin = async (e: React.FormEvent) => {
+//     e.preventDefault();
+    
+//     if (!loginInfo || !password) {
+//       setError('Vui lòng nhập tài khoản và mật khẩu.');
+//       return;
+//     }
+
+//     try {
+//       setIsLoading(true);
+//       setError('');
+//       setSuccessMessage('');
+//       await login(loginInfo, password);
+
+   
+     
+      
+//     } catch (err: any) {
+//       let errorData = err.response?.data;
+//       let errorMessage = errorData?.Details || errorData?.message || errorData?.error || err.message || 'Lỗi kết nối máy chủ.';
+
+      
+//       // Chuẩn hóa thông báo tiếng Việt
+//       if (errorMessage.includes('Account is locked')) {
+//         errorMessage = 'Tài khoản đã bị khóa do nhập sai mật khẩu nhiều lần. Vui lòng thử lại sau 2 phút.';
+//       } else if (errorMessage.includes('Invalid login info') || errorMessage.includes('Wrong password') || errorMessage.includes('Invalid credentials')) {
+//         errorMessage = 'Tên tài khoản hoặc mật khẩu không chính xác.';
+//       } else if (errorMessage.includes('User not found')) {
+//         errorMessage = 'Tài khoản không tồn tại trong hệ thống.';
+//       }
+
+//       setError(errorMessage);
+//     } finally {
+//       setIsLoading(false);
+//     }
+//   };
+ useEffect(() => {
+    if (userRole) {
+      console.log("Redirecting based on role:", userRole);
       if (userRole === 'Admin') {
         navigate('/teller');
-      } else {
+      } else if (userRole === 'User') {
         navigate('/kiosk');
       }
     }
-  }, [navigate, userRole]);
+  }, [userRole, navigate]);
 
-  // Handle login with role-based redirection
+  // Handle login
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -257,31 +304,10 @@ const LoginPage = () => {
       setIsLoading(true);
       setError('');
       setSuccessMessage('');
-      
-      const response = await fetch(`${VITE_API_BASE_URL}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ loginInfo, password }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => null);
-        // Backend trả về dạng { "Error": "...", "Details": "..." }
-        throw new Error(errorData?.Details || errorData?.message || errorData?.error || 'Đăng nhập thất bại. Sai tài khoản hoặc mật khẩu.');
-      }
-
-      const data = await response.json();
-      
-      const token = data.accessToken || data.AccessToken || data.token;
-      const refreshToken = data.refreshToken || data.RefreshToken;
-      
-      if (token) {
-        await login(token, refreshToken);
-      }
-
-      // Wait for role to be updated
+      await login(loginInfo, password);
+     // Wait for role to be updated
       setTimeout(() => {
-        const role = localStorage.getItem('userRole') || userRole;
+        const role = userRole||null;
         console.log("User role after login:", role);
         
         // Role-based redirection
@@ -291,9 +317,12 @@ const LoginPage = () => {
           navigate('/kiosk');
         }
       }, 100);
+      // Không cần setTimeout hay localStorage
+      // useEffect với userRole sẽ tự động redirect
       
     } catch (err: any) {
-      let errorMessage = err.message || 'Lỗi kết nối máy chủ.';
+      let errorData = err.response?.data;
+      let errorMessage = errorData?.Details || errorData?.message || errorData?.error || err.message || 'Lỗi kết nối máy chủ.';
       
       // Chuẩn hóa thông báo tiếng Việt
       if (errorMessage.includes('Account is locked')) {
@@ -322,49 +351,30 @@ const handleGoogleLogin = () => {
 };
   // Handle forgot password
   const handleForgotPassword = async (email: string) => {
-    const response = await fetch(`${VITE_API_BASE_URL}/auth/forgot-password`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => null);
-      throw new Error(errorData?.message || 'Gửi yêu cầu thất bại');
+    try {
+      const response = await apiClient.post('/auth/forgot-password', { email });
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Gửi yêu cầu thất bại');
     }
-
-    return response.json();
   };
 
   // Handle change password
   const handleChangePassword = async (currentPassword: string, newPassword: string) => {
-    const token = localStorage.getItem('accessToken');
-    if (!token) {
-      throw new Error('Vui lòng đăng nhập trước');
-    }
-
-    const response = await fetch(`${VITE_API_BASE_URL}/auth/change-password`, {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({ 
+    try {
+      await apiClient.post('/auth/change-password', {
         currentPassword, 
         newPassword 
-      }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => null);
-      throw new Error(errorData?.message || 'Đổi mật khẩu thất bại');
+      });
+      setSuccessMessage('Đổi mật khẩu thành công! Vui lòng đăng nhập lại.');
+      setTimeout(() => {
+        logout();
+        navigate('/login');
+      }, 2000);
+    } catch (error: any) {
+      let errorData = error.response?.data;
+      throw new Error(errorData?.message || errorData?.Details || 'Đổi mật khẩu thất bại');
     }
-
-    setSuccessMessage('Đổi mật khẩu thành công! Vui lòng đăng nhập lại.');
-    setTimeout(() => {
-      logout();
-      navigate('/login');
-    }, 2000);
   };
 
   return (

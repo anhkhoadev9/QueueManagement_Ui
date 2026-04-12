@@ -347,6 +347,7 @@ const handleGoogleLogin = () => {
     `&prompt=select_account`;
 
   window.location.href = url;
+  
  
 };
   // Handle forgot password
